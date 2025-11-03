@@ -10,6 +10,7 @@ export { default as ExportSamples } from '$lib/components/ExportSamples/ExportSa
 export { default as Checkbox } from '$lib/components/Form/Checkbox/Checkbox.svelte';
 export { default as Header } from '$lib/components/Header/Header.svelte';
 export { default as ImageSizeControl } from '$lib/components/ImageSizeControl/index.svelte';
+export { default as ImageSearchDialog } from '$lib/components/ImageSearchDialog.svelte';
 export { default as LabelsMenu } from '$lib/components/LabelsMenu/LabelsMenu.svelte';
 export { LazyTrigger } from '$lib/components/LazyTrigger/';
 export { default as Logo } from '$lib/components/Logo/index.svelte';

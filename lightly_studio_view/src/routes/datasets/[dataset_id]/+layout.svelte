@@ -10,11 +10,12 @@
         LabelsMenu,
         RefineClassifierDialog,
         TagCreateDialog,
-        TagsMenu
+        TagsMenu,
+        ImageSearchDialog
     } from '$lib/components';
     import Input from '$lib/components/ui/input/input.svelte';
     import Separator from '$lib/components/ui/separator/separator.svelte';
-    import { Search, SlidersHorizontal } from '@lucide/svelte';
+    import { Search, SlidersHorizontal, Camera } from '@lucide/svelte';
     import { onDestroy, onMount } from 'svelte';
     import { derived, get, writable } from 'svelte/store';
     import { toast } from 'svelte-sonner';
@@ -226,12 +227,18 @@
         toast.error('Error', { description: errorMessage });
     };
 
+    let showImageSearchDialog = $state(false);
+
     const totalAnnotations = $derived.by(() => {
         const countsData = $annotationCounts.data;
         if (!countsData) return 0;
         return countsData.reduce((sum, item) => sum + item.total_count, 0);
     });
 </script>
+
+{#if showImageSearchDialog}
+    <ImageSearchDialog on:close={() => (showImageSearchDialog = false)} />
+{/if}
 
 <div class="flex-none">
     <Header {datasetId} />
@@ -267,109 +274,74 @@
                 </div>
             {/if}
 
-            {#if isSamples && $showPlot}
-                <!-- When plot is shown, use PaneGroup for the main content + plot -->
-                <PaneGroup direction="horizontal" class="flex-1">
-                    <Pane defaultSize={50} minSize={30} class="flex">
-                        <div class="flex flex-1 flex-col space-y-4 rounded-[1vw] bg-card p-4">
-                            <div class="my-2 flex items-center space-x-4">
-                                <div class="flex-1">
-                                    {#if hasEmbeddingSearch}
-                                        <div class="relative">
-                                            <Search
-                                                class="absolute left-2 top-[50%] h-4 w-4 translate-y-[-50%] text-muted-foreground"
-                                            />
-                                            <Input
-                                                placeholder="Search images by description"
-                                                class="pl-8"
-                                                bind:value={query_text}
-                                                onkeydown={onKeyDown}
-                                                data-testid="text-embedding-search-input"
-                                            />
-                                        </div>
-                                    {/if}
-                                </div>
-
-                                <div class="w-4/12">
-                                    <ImageSizeControl />
-                                </div>
-                                {#if hasEmbeddingSearch}
-                                    <Button
-                                        class="flex items-center space-x-1"
-                                        data-testid="toggle-plot-button"
-                                        variant={$showPlot ? 'default' : 'ghost'}
-                                        onclick={() => setShowPlot(!$showPlot)}
-                                    >
-                                        <ChartNetwork class="size-4" />
-                                        <span>Hide Embeddings</span>
-                                    </Button>
-                                {/if}
-                            </div>
-                            <Separator class="mb-4 bg-border-hard" />
-                            <div class="flex min-h-0 flex-1 overflow-hidden">
-                                {@render children()}
-                            </div>
-                        </div>
-                    </Pane>
-
-                    <PaneResizer
-                        class="relative mx-2 flex w-1 cursor-col-resize items-center justify-center"
-                    >
-                        <div class="bg-brand z-10 flex h-7 min-w-5 items-center justify-center">
-                            <GripVertical class="text-diffuse-foreground" />
-                        </div>
-                    </PaneResizer>
-
-                    <Pane defaultSize={50} minSize={30} class="flex flex-col">
-                        <PlotPanel />
-                    </Pane>
-                </PaneGroup>
-            {:else}
-                <!-- When plot is hidden or not samples view, show normal layout -->
-                <div class="flex flex-1 flex-col space-y-4 rounded-[1vw] bg-card p-4 pb-2">
-                    {#if isSamples || isAnnotations}
-                        <div class="my-2 flex items-center space-x-4">
-                            <div class="flex-1">
-                                <!-- Conditional rendering for the search bar -->
-                                {#if isSamples && hasEmbeddingSearch}
-                                    <div class="relative">
-                                        <Search
-                                            class="absolute left-2 top-[50%] h-4 w-4 translate-y-[-50%] text-muted-foreground"
-                                        />
-                                        <Input
-                                            placeholder="Search images by description"
-                                            class="pl-8"
-                                            bind:value={query_text}
-                                            onkeydown={onKeyDown}
-                                            data-testid="text-embedding-search-input"
-                                        />
-                                    </div>
-                                {/if}
-                            </div>
-
-                            <div class="w-4/12">
-                                <ImageSizeControl />
-                            </div>
-                            {#if isSamples && hasEmbeddingSearch}
+            <div class="flex flex-1 flex-col space-y-4 rounded-[1vw] bg-card p-4">
+                <div class="my-2 flex items-center space-x-4">
+                    <div class="flex-1">
+                        {#if hasEmbeddingSearch}
+                            <div class="relative flex items-center">
+                                <Search
+                                    class="absolute left-2 top-[50%] h-4 w-4 translate-y-[-50%] text-muted-foreground"
+                                />
+                                <Input
+                                    placeholder="Search images by description"
+                                    class="pl-8 pr-10"
+                                    bind:value={query_text}
+                                    onkeydown={onKeyDown}
+                                    data-testid="text-embedding-search-input"
+                                />
                                 <Button
-                                    class="flex items-center space-x-1"
-                                    data-testid="toggle-plot-button"
-                                    variant={$showPlot ? 'default' : 'ghost'}
-                                    onclick={() => setShowPlot(!$showPlot)}
+                                    variant="ghost"
+                                    class="absolute right-1 top-[50%] h-8 w-8 translate-y-[-50%] p-0"
+                                    on:click={() => {
+                                        console.log('Camera button clicked');
+                                        showImageSearchDialog = true;
+                                    }}
                                 >
-                                    <ChartNetwork class="size-4" />
-                                    <span>Show Embeddings</span>
+                                    <Camera class="h-4 w-4" />
                                 </Button>
-                            {/if}
-                        </div>
-                        <Separator class="mb-4 bg-border-hard" />
-                    {/if}
-
-                    <div class="flex min-h-0 flex-1">
-                        {@render children()}
+                            </div>
+                        {/if}
                     </div>
+
+                    <div class="w-4/12">
+                        <ImageSizeControl />
+                    </div>
+                    {#if hasEmbeddingSearch}
+                        <Button
+                            class="flex items-center space-x-1"
+                            data-testid="toggle-plot-button"
+                            variant={$showPlot ? 'default' : 'ghost'}
+                            on:click={() => setShowPlot(!$showPlot)}
+                        >
+                            <ChartNetwork class="size-4" />
+                            <span>{$showPlot ? 'Hide Embeddings' : 'Show Embeddings'}</span>
+                        </Button>
+                    {/if}
                 </div>
-            {/if}
+                <Separator class="mb-4 bg-border-hard" />
+                <div class="flex min-h-0 flex-1 overflow-hidden">
+                    {#if isSamples && $showPlot}
+                        <PaneGroup direction="horizontal" class="flex-1">
+                            <Pane defaultSize={50} minSize={30} class="flex">
+                                {@render children()}
+                            </Pane>
+                            <PaneResizer
+                                class="relative mx-2 flex w-1 cursor-col-resize items-center justify-center"
+                            >
+                                <div class="bg-brand z-10 flex h-7 min-w-5 items-center justify-center">
+                                    <GripVertical class="text-diffuse-foreground" />
+                                </div>
+                            </PaneResizer>
+                            <Pane defaultSize={50} minSize={30} class="flex flex-col">
+                                <PlotPanel />
+                            </Pane>
+                        </PaneGroup>
+                    {:else}
+                        {@render children()}
+                    {/if}
+                </div>
+            </div>
+
             {#if hasEmbeddingSearch && isFSCEnabled}
                 <CreateClassifierDialog />
                 <RefineClassifierDialog />
